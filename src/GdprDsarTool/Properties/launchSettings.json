@@ -1,0 +1,12 @@
+{
+  "profiles": {
+    "GdprDsarTool": {
+      "commandName": "Project",
+      "launchBrowser": true,
+      "environmentVariables": {
+        "ASPNETCORE_ENVIRONMENT": "Development"
+      },
+      "applicationUrl": "https://localhost:47061;http://localhost:47062"
+    }
+  }
+}

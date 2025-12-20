@@ -1,0 +1,70 @@
+@model SubmitRequestViewModel
+@{
+    ViewData["Title"] = "Submit GDPR Request";
+}
+
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <h2 class="mb-4">Submit a Data Subject Access Request</h2>
+        <p class="text-muted mb-4">
+            Under GDPR, you have the right to access, delete, or rectify your personal data. 
+            Please fill out this form and we will respond within 30 days.
+        </p>
+
+        <div class="card">
+            <div class="card-body">
+                <form asp-action="SubmitRequest" method="post">
+                    <div asp-validation-summary="ModelOnly" class="alert alert-danger"></div>
+
+                    <div class="mb-3">
+                        <label asp-for="Email" class="form-label"></label>
+                        <input asp-for="Email" class="form-control" placeholder="your.email@example.com" />
+                        <span asp-validation-for="Email" class="text-danger"></span>
+                    </div>
+
+                    <div class="mb-3">
+                        <label asp-for="FullName" class="form-label"></label>
+                        <input asp-for="FullName" class="form-control" placeholder="John Doe" />
+                        <span asp-validation-for="FullName" class="text-danger"></span>
+                    </div>
+
+                    <div class="mb-3">
+                        <label asp-for="RequestType" class="form-label"></label>
+                        <select asp-for="RequestType" class="form-select">
+                            <option value="">-- Select Request Type --</option>
+                            <option value="@RequestType.Access">Access - I want to see what data you have about me</option>
+                            <option value="@RequestType.Delete">Delete - I want you to delete my data</option>
+                            <option value="@RequestType.Rectify">Rectify - I want to correct my data</option>
+                        </select>
+                        <span asp-validation-for="RequestType" class="text-danger"></span>
+                    </div>
+
+                    <div class="mb-3">
+                        <label asp-for="Message" class="form-label"></label>
+                        <textarea asp-for="Message" class="form-control" rows="4" 
+                                  placeholder="Provide any additional details about your request..."></textarea>
+                        <span asp-validation-for="Message" class="text-danger"></span>
+                    </div>
+
+                    <div class="d-grid gap-2">
+                        <button type="submit" class="btn btn-primary btn-lg">Submit Request</button>
+                        <a asp-controller="Home" asp-action="Index" class="btn btn-outline-secondary">Cancel</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <div class="alert alert-info mt-4">
+            <strong>What happens next?</strong>
+            <ul class="mb-0 mt-2">
+                <li>You'll receive a confirmation email immediately</li>
+                <li>We'll process your request within 30 days (as required by GDPR)</li>
+                <li>You'll receive another email when your request is complete</li>
+            </ul>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

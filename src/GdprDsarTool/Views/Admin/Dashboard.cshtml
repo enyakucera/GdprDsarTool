@@ -1,0 +1,107 @@
+@model List<DsarRequest>
+@{
+    ViewData["Title"] = "Admin Dashboard";
+}
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2>DSAR Request Dashboard</h2>
+    <a asp-action="Logout" class="btn btn-outline-secondary">Logout</a>
+</div>
+
+<div class="row mb-4">
+    <div class="col-md-3">
+        <div class="card text-center">
+            <div class="card-body">
+                <h5 class="card-title text-muted">Total Requests</h5>
+                <div class="display-4">@Model.Count</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card text-center">
+            <div class="card-body">
+                <h5 class="card-title text-muted">Pending</h5>
+                <div class="display-4 text-warning">@Model.Count(r => r.Status == RequestStatus.Pending)</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card text-center">
+            <div class="card-body">
+                <h5 class="card-title text-muted">In Progress</h5>
+                <div class="display-4 text-info">@Model.Count(r => r.Status == RequestStatus.InProgress)</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card text-center">
+            <div class="card-body">
+                <h5 class="card-title text-muted">Completed</h5>
+                <div class="display-4 text-success">@Model.Count(r => r.Status == RequestStatus.Completed)</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-header">
+        <h5 class="mb-0">All Requests</h5>
+    </div>
+    <div class="card-body">
+        @if (!Model.Any())
+        {
+            <div class="alert alert-info">No DSAR requests yet.</div>
+        }
+        else
+        {
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th>Submitted</th>
+                            <th>Name</th>
+                            <th>Email</th>
+                            <th>Type</th>
+                            <th>Status</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var request in Model)
+                        {
+                            <tr>
+                                <td>@request.SubmittedAt.ToString("dd/MM/yyyy HH:mm")</td>
+                                <td>@request.RequesterName</td>
+                                <td>@request.RequesterEmail</td>
+                                <td>
+                                    <span class="badge bg-primary">@request.RequestType</span>
+                                </td>
+                                <td>
+                                    @switch (request.Status)
+                                    {
+                                        case RequestStatus.Pending:
+                                            <span class="badge bg-warning">Pending</span>
+                                            break;
+                                        case RequestStatus.InProgress:
+                                            <span class="badge bg-info">In Progress</span>
+                                            break;
+                                        case RequestStatus.Completed:
+                                            <span class="badge bg-success">Completed</span>
+                                            break;
+                                        case RequestStatus.Rejected:
+                                            <span class="badge bg-danger">Rejected</span>
+                                            break;
+                                    }
+                                </td>
+                                <td>
+                                    <a asp-action="RequestDetail" asp-route-id="@request.Id" 
+                                       class="btn btn-sm btn-outline-primary">View</a>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        }
+    </div>
+</div>

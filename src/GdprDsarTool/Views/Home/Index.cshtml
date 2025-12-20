@@ -1,0 +1,83 @@
+@{
+    ViewData["Title"] = "GDPR DSAR Automation";
+}
+
+<div class="text-center">
+    <div class="py-5">
+        <h1 class="display-4 fw-bold">Automate GDPR Data Subject Access Requests</h1>
+        <p class="lead text-muted">Process DSAR requests 10x faster with our simple automation tool</p>
+        <div class="mt-4">
+            <a class="btn btn-primary btn-lg px-4" asp-controller="Public" asp-action="SubmitRequest">Submit a Request</a>
+            <a class="btn btn-outline-secondary btn-lg px-4 ms-2" asp-controller="Admin" asp-action="Login">Admin Login</a>
+        </div>
+    </div>
+</div>
+
+<div class="row mt-5">
+    <div class="col-md-4">
+        <div class="card h-100">
+            <div class="card-body">
+                <h3 class="card-title">📝 Easy Request Form</h3>
+                <p class="card-text">Simple web form for data subjects to submit access, deletion, or rectification requests.</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card h-100">
+            <div class="card-body">
+                <h3 class="card-title">⚡ Fast Processing</h3>
+                <p class="card-text">Admin dashboard to manage all requests with one-click PDF generation.</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card h-100">
+            <div class="card-body">
+                <h3 class="card-title">✅ GDPR Compliant</h3>
+                <p class="card-text">Automatically track and respond to requests within the 30-day GDPR deadline.</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row mt-5 py-5 bg-light rounded">
+    <div class="col-12 text-center">
+        <h2>How It Works</h2>
+        <p class="text-muted">Three simple steps to GDPR compliance</p>
+    </div>
+    <div class="col-md-4 text-center mt-4">
+        <div class="display-4 text-primary">1</div>
+        <h4>User Submits Request</h4>
+        <p>Data subjects fill out a simple form with their email and request type.</p>
+    </div>
+    <div class="col-md-4 text-center mt-4">
+        <div class="display-4 text-primary">2</div>
+        <h4>Admin Reviews</h4>
+        <p>Your compliance team sees all requests in one dashboard.</p>
+    </div>
+    <div class="col-md-4 text-center mt-4">
+        <div class="display-4 text-primary">3</div>
+        <h4>Generate Response</h4>
+        <p>One-click PDF generation with all relevant data.</p>
+    </div>
+</div>
+
+<div class="row mt-5 py-5 text-center">
+    <div class="col-12">
+        <h2>Pricing</h2>
+        <p class="text-muted">Simple, transparent pricing</p>
+        <div class="card mt-4 mx-auto" style="max-width: 400px;">
+            <div class="card-body">
+                <h3 class="card-title">Starter</h3>
+                <div class="display-4 fw-bold">€49<span class="fs-5 text-muted">/month</span></div>
+                <ul class="list-unstyled mt-3">
+                    <li>✓ Unlimited requests</li>
+                    <li>✓ PDF generation</li>
+                    <li>✓ Email notifications</li>
+                    <li>✓ Basic support</li>
+                </ul>
+                <a href="mailto:sales@gdprdsar.com" class="btn btn-primary mt-3">Contact Sales</a>
+            </div>
+        </div>
+    </div>
+</div>

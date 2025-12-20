@@ -1,0 +1,151 @@
+@model DsarRequest
+@{
+    ViewData["Title"] = "Request Detail";
+}
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2>Request Detail</h2>
+    <a asp-action="Dashboard" class="btn btn-outline-secondary">Back to Dashboard</a>
+</div>
+
+<div class="row">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">Request Information</h5>
+            </div>
+            <div class="card-body">
+                <dl class="row">
+                    <dt class="col-sm-4">Request ID:</dt>
+                    <dd class="col-sm-8"><code>@Model.Id</code></dd>
+
+                    <dt class="col-sm-4">Requester Name:</dt>
+                    <dd class="col-sm-8">@Model.RequesterName</dd>
+
+                    <dt class="col-sm-4">Requester Email:</dt>
+                    <dd class="col-sm-8">@Model.RequesterEmail</dd>
+
+                    <dt class="col-sm-4">Request Type:</dt>
+                    <dd class="col-sm-8">
+                        <span class="badge bg-primary">@Model.RequestType</span>
+                    </dd>
+
+                    <dt class="col-sm-4">Status:</dt>
+                    <dd class="col-sm-8">
+                        @switch (Model.Status)
+                        {
+                            case RequestStatus.Pending:
+                                <span class="badge bg-warning">Pending</span>
+                                break;
+                            case RequestStatus.InProgress:
+                                <span class="badge bg-info">In Progress</span>
+                                break;
+                            case RequestStatus.Completed:
+                                <span class="badge bg-success">Completed</span>
+                                break;
+                            case RequestStatus.Rejected:
+                                <span class="badge bg-danger">Rejected</span>
+                                break;
+                        }
+                    </dd>
+
+                    <dt class="col-sm-4">Submitted At:</dt>
+                    <dd class="col-sm-8">@Model.SubmittedAt.ToString("dd MMMM yyyy HH:mm")</dd>
+
+                    @if (Model.CompletedAt.HasValue)
+                    {
+                        <dt class="col-sm-4">Completed At:</dt>
+                        <dd class="col-sm-8">@Model.CompletedAt.Value.ToString("dd MMMM yyyy HH:mm")</dd>
+                    }
+
+                    @if (!string.IsNullOrEmpty(Model.RequestMessage))
+                    {
+                        <dt class="col-sm-4">Message:</dt>
+                        <dd class="col-sm-8">@Model.RequestMessage</dd>
+                    }
+
+                    @if (!string.IsNullOrEmpty(Model.ResponsePdfUrl))
+                    {
+                        <dt class="col-sm-4">Response PDF:</dt>
+                        <dd class="col-sm-8">
+                            <a href="@Model.ResponsePdfUrl" target="_blank" class="btn btn-sm btn-success">
+                                Download PDF
+                            </a>
+                        </dd>
+                    }
+                </dl>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">Actions</h5>
+            </div>
+            <div class="card-body">
+                <form asp-action="GeneratePdf" asp-route-id="@Model.Id" method="post" class="mb-2">
+                    <button type="submit" class="btn btn-primary w-100" 
+                            @(string.IsNullOrEmpty(Model.ResponsePdfUrl) ? "" : "disabled")>
+                        @(string.IsNullOrEmpty(Model.ResponsePdfUrl) ? "Generate PDF Response" : "PDF Already Generated")
+                    </button>
+                </form>
+
+                <hr>
+
+                <h6 class="text-muted mb-2">Update Status:</h6>
+                
+                <form asp-action="UpdateStatus" asp-route-id="@Model.Id" method="post" class="mb-2">
+                    <input type="hidden" name="status" value="@RequestStatus.InProgress" />
+                    <button type="submit" class="btn btn-info w-100" 
+                            @(Model.Status == RequestStatus.InProgress ? "disabled" : "")>
+                        Mark In Progress
+                    </button>
+                </form>
+
+                <form asp-action="UpdateStatus" asp-route-id="@Model.Id" method="post" class="mb-2">
+                    <input type="hidden" name="status" value="@RequestStatus.Completed" />
+                    <button type="submit" class="btn btn-success w-100"
+                            @(Model.Status == RequestStatus.Completed ? "disabled" : "")>
+                        Mark Completed
+                    </button>
+                </form>
+
+                <form asp-action="UpdateStatus" asp-route-id="@Model.Id" method="post">
+                    <input type="hidden" name="status" value="@RequestStatus.Rejected" />
+                    <button type="submit" class="btn btn-danger w-100"
+                            @(Model.Status == RequestStatus.Rejected ? "disabled" : "")
+                            onclick="return confirm('Are you sure you want to reject this request?')">
+                        Mark Rejected
+                    </button>
+                </form>
+            </div>
+        </div>
+
+        <div class="card mt-3">
+            <div class="card-body">
+                <h6 class="card-title">Timeline</h6>
+                <ul class="list-unstyled">
+                    <li class="mb-2">
+                        <strong>📝 Submitted:</strong><br>
+                        <small class="text-muted">@Model.SubmittedAt.ToString("dd/MM/yyyy HH:mm")</small>
+                    </li>
+                    @if (Model.Status != RequestStatus.Pending)
+                    {
+                        <li class="mb-2">
+                            <strong>⏳ Status Changed:</strong><br>
+                            <small class="text-muted">To @Model.Status</small>
+                        </li>
+                    }
+                    @if (Model.CompletedAt.HasValue)
+                    {
+                        <li class="mb-2">
+                            <strong>✅ Completed:</strong><br>
+                            <small class="text-muted">@Model.CompletedAt.Value.ToString("dd/MM/yyyy HH:mm")</small>
+                        </li>
+                    }
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
