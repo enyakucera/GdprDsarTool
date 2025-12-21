@@ -84,3 +84,4 @@ ehthumbs.db
 # Logs
 *.log
 logs/
+/src/GdprDsarTool/wwwroot/pdfs

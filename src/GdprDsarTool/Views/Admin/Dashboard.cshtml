@@ -1,101 +1,172 @@
-@model List<DsarRequest>
+﻿@model List<DsarRequest>
 @{
     ViewData["Title"] = "Admin Dashboard";
 }
 
-<div class="d-flex justify-content-between align-items-center mb-4">
-    <h2>DSAR Request Dashboard</h2>
-    <a asp-action="Logout" class="btn btn-outline-secondary">Logout</a>
+<!-- Header -->
+<div class="d-flex justify-content-between align-items-center mb-4 animate-fade-in">
+    <div>
+        <h2 class="mb-1">DSAR Request Dashboard</h2>
+        <p class="text-muted mb-0">Manage all your GDPR requests in one place</p>
+    </div>
+    <a asp-action="Logout" class="btn btn-outline-primary">
+        Logout
+    </a>
 </div>
 
-<div class="row mb-4">
+<!-- Stats Cards -->
+<div class="row g-4 mb-5 animate-slide-up">
     <div class="col-md-3">
-        <div class="card text-center">
-            <div class="card-body">
-                <h5 class="card-title text-muted">Total Requests</h5>
-                <div class="display-4">@Model.Count</div>
+        <div class="stat-card">
+            <div class="d-flex justify-content-between align-items-start mb-3">
+                <div>
+                    <div class="stat-label">Total Requests</div>
+                    <div class="stat-value">@Model.Count</div>
+                </div>
+                <div class="p-3 rounded-circle" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
+                    <svg width="24" height="24" fill="white" viewBox="0 0 20 20">
+                        <path d="M9 2a1 1 0 000 2h2a1 1 0 100-2H9z" />
+                        <path fill-rule="evenodd" d="M4 5a2 2 0 012-2 3 3 0 003 3h2a3 3 0 003-3 2 2 0 012 2v11a2 2 0 01-2 2H6a2 2 0 01-2-2V5zm3 4a1 1 0 000 2h.01a1 1 0 100-2H7zm3 0a1 1 0 000 2h3a1 1 0 100-2h-3zm-3 4a1 1 0 100 2h.01a1 1 0 100-2H7zm3 0a1 1 0 100 2h3a1 1 0 100-2h-3z" />
+                    </svg>
+                </div>
             </div>
         </div>
     </div>
+
     <div class="col-md-3">
-        <div class="card text-center">
-            <div class="card-body">
-                <h5 class="card-title text-muted">Pending</h5>
-                <div class="display-4 text-warning">@Model.Count(r => r.Status == RequestStatus.Pending)</div>
+        <div class="stat-card">
+            <div class="d-flex justify-content-between align-items-start mb-3">
+                <div>
+                    <div class="stat-label">Pending</div>
+                    <div class="stat-value" style="color: var(--warning);">
+                        @Model.Count(r => r.Status == RequestStatus.Pending)
+                    </div>
+                </div>
+                <div class="p-3 rounded-circle" style="background: var(--warning);">
+                    <svg width="24" height="24" fill="white" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" />
+                    </svg>
+                </div>
             </div>
         </div>
     </div>
+
     <div class="col-md-3">
-        <div class="card text-center">
-            <div class="card-body">
-                <h5 class="card-title text-muted">In Progress</h5>
-                <div class="display-4 text-info">@Model.Count(r => r.Status == RequestStatus.InProgress)</div>
+        <div class="stat-card">
+            <div class="d-flex justify-content-between align-items-start mb-3">
+                <div>
+                    <div class="stat-label">In Progress</div>
+                    <div class="stat-value" style="color: var(--info);">
+                        @Model.Count(r => r.Status == RequestStatus.InProgress)
+                    </div>
+                </div>
+                <div class="p-3 rounded-circle" style="background: var(--info);">
+                    <svg width="24" height="24" fill="white" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-11a1 1 0 10-2 0v3.586L7.707 9.293a1 1 0 00-1.414 1.414l3 3a1 1 0 001.414 0l3-3a1 1 0 00-1.414-1.414L11 10.586V7z" />
+                    </svg>
+                </div>
             </div>
         </div>
     </div>
+
     <div class="col-md-3">
-        <div class="card text-center">
-            <div class="card-body">
-                <h5 class="card-title text-muted">Completed</h5>
-                <div class="display-4 text-success">@Model.Count(r => r.Status == RequestStatus.Completed)</div>
+        <div class="stat-card">
+            <div class="d-flex justify-content-between align-items-start mb-3">
+                <div>
+                    <div class="stat-label">Completed</div>
+                    <div class="stat-value" style="color: var(--success);">
+                        @Model.Count(r => r.Status == RequestStatus.Completed)
+                    </div>
+                </div>
+                <div class="p-3 rounded-circle" style="background: var(--success);">
+                    <svg width="24" height="24" fill="white" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" />
+                    </svg>
+                </div>
             </div>
         </div>
     </div>
 </div>
 
-<div class="card">
-    <div class="card-header">
+<!-- Requests Table -->
+<div class="card animate-slide-up" style="animation-delay: 0.2s;">
+    <div class="card-header d-flex justify-content-between align-items-center">
         <h5 class="mb-0">All Requests</h5>
+        <span class="badge badge-primary">@Model.Count Total</span>
     </div>
-    <div class="card-body">
+    <div class="card-body p-0">
         @if (!Model.Any())
         {
-            <div class="alert alert-info">No DSAR requests yet.</div>
+            <div class="text-center py-5">
+                <div style="font-size: 4rem; color: var(--gray-300); margin-bottom: 1rem;">📋</div>
+                <h5 class="text-muted">No DSAR requests yet</h5>
+                <p class="text-muted mb-0">Requests will appear here once customers submit them</p>
+            </div>
         }
         else
         {
             <div class="table-responsive">
-                <table class="table table-hover">
+                <table class="table table-hover mb-0">
                     <thead>
                         <tr>
                             <th>Submitted</th>
-                            <th>Name</th>
+                            <th>Requester</th>
                             <th>Email</th>
                             <th>Type</th>
                             <th>Status</th>
-                            <th>Actions</th>
+                            <th class="text-end">Actions</th>
                         </tr>
                     </thead>
                     <tbody>
                         @foreach (var request in Model)
                         {
                             <tr>
-                                <td>@request.SubmittedAt.ToString("dd/MM/yyyy HH:mm")</td>
-                                <td>@request.RequesterName</td>
-                                <td>@request.RequesterEmail</td>
                                 <td>
-                                    <span class="badge bg-primary">@request.RequestType</span>
+                                    <span class="text-muted">@request.SubmittedAt.ToString("dd/MM/yyyy")</span><br />
+                                    <small class="text-muted">@request.SubmittedAt.ToString("HH:mm")</small>
+                                </td>
+                                <td>
+                                    <strong>@request.RequesterName</strong>
+                                </td>
+                                <td>
+                                    <span class="text-muted">@request.RequesterEmail</span>
+                                </td>
+                                <td>
+                                    @switch (request.RequestType)
+                                    {
+                                        case RequestType.Access:
+                                            <span class="badge badge-info">Access</span>
+                                            break;
+                                        case RequestType.Delete:
+                                            <span class="badge badge-danger">Delete</span>
+                                            break;
+                                        case RequestType.Rectify:
+                                            <span class="badge badge-primary">Rectify</span>
+                                            break;
+                                    }
                                 </td>
                                 <td>
                                     @switch (request.Status)
                                     {
                                         case RequestStatus.Pending:
-                                            <span class="badge bg-warning">Pending</span>
+                                            <span class="badge badge-warning">Pending</span>
                                             break;
                                         case RequestStatus.InProgress:
-                                            <span class="badge bg-info">In Progress</span>
+                                            <span class="badge badge-info">In Progress</span>
                                             break;
                                         case RequestStatus.Completed:
-                                            <span class="badge bg-success">Completed</span>
+                                            <span class="badge badge-success">Completed</span>
                                             break;
                                         case RequestStatus.Rejected:
-                                            <span class="badge bg-danger">Rejected</span>
+                                            <span class="badge badge-danger">Rejected</span>
                                             break;
                                     }
                                 </td>
-                                <td>
-                                    <a asp-action="RequestDetail" asp-route-id="@request.Id" 
-                                       class="btn btn-sm btn-outline-primary">View</a>
+                                <td class="text-end">
+                                    <a asp-action="RequestDetail" asp-route-id="@request.Id"
+                                       class="btn btn-sm btn-primary">
+                                        View Details →
+                                    </a>
                                 </td>
                             </tr>
                         }
@@ -105,3 +176,17 @@
         }
     </div>
 </div>
+
+<style>
+    .stat-card {
+        height: 100%;
+    }
+
+    tbody tr {
+        cursor: pointer;
+    }
+
+    .table td {
+        vertical-align: middle;
+    }
+</style>
