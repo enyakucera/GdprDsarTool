@@ -1,0 +1,176 @@
+name: Deploy GdprDsarTool to Kubernetes
+
+on:
+  push:
+    branches: [ master ]
+  workflow_dispatch:
+
+env:
+  NAMESPACE: production
+  IMAGE_NAME: gdprdsar-tool
+  IMAGE_TAG: latest
+
+jobs:
+  build:
+    runs-on: self-hosted
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Build Docker image
+        run: |
+          sudo docker build -t ${IMAGE_NAME}:${IMAGE_TAG} .
+          sudo docker images | grep ${IMAGE_NAME}
+
+      - name: Import image to containerd
+        run: |
+          sudo docker save ${IMAGE_NAME}:${IMAGE_TAG} -o /tmp/${IMAGE_NAME}.tar
+          sudo k3s ctr images import /tmp/${IMAGE_NAME}.tar
+          sudo k3s crictl images | grep ${IMAGE_NAME}
+          sudo rm -f /tmp/${IMAGE_NAME}.tar
+
+      - name: Deploy to Kubernetes
+        run: |
+          export KUBECONFIG=/etc/rancher/k3s/k3s.yaml
+          
+          # Create namespace if not exists
+          kubectl create namespace ${NAMESPACE} --dry-run=client -o yaml | kubectl apply -f -
+          
+          # Deploy application
+          cat <<EOF | kubectl apply -f -
+          apiVersion: apps/v1
+          kind: Deployment
+          metadata:
+            name: gdprdsar-tool
+            namespace: ${NAMESPACE}
+          spec:
+            replicas: 2
+            selector:
+              matchLabels:
+                app: gdprdsar-tool
+            template:
+              metadata:
+                labels:
+                  app: gdprdsar-tool
+              spec:
+                containers:
+                - name: web
+                  image: ${IMAGE_NAME}:${IMAGE_TAG}
+                  imagePullPolicy: Never
+                  ports:
+                  - containerPort: 8080
+                    name: http
+                  env:
+                  - name: ASPNETCORE_ENVIRONMENT
+                    value: "Production"
+                  - name: ASPNETCORE_URLS
+                    value: "http://+:8080"
+                  - name: ConnectionStrings__DefaultConnection
+                    valueFrom:
+                      secretKeyRef:
+                        name: gdprdsar-secrets
+                        key: connection-string
+                  resources:
+                    requests:
+                      memory: "512Mi"
+                      cpu: "500m"
+                    limits:
+                      memory: "1Gi"
+                      cpu: "2000m"
+                  volumeMounts:
+                  - name: pdfs
+                    mountPath: /app/wwwroot/pdfs
+                  livenessProbe:
+                    httpGet:
+                      path: /
+                      port: 8080
+                    initialDelaySeconds: 30
+                    periodSeconds: 20
+                  readinessProbe:
+                    httpGet:
+                      path: /
+                      port: 8080
+                    initialDelaySeconds: 10
+                    periodSeconds: 10
+                volumes:
+                - name: pdfs
+                  persistentVolumeClaim:
+                    claimName: gdprdsar-pdfs-pvc
+          ---
+          apiVersion: v1
+          kind: PersistentVolumeClaim
+          metadata:
+            name: gdprdsar-pdfs-pvc
+            namespace: ${NAMESPACE}
+          spec:
+            accessModes:
+            - ReadWriteOnce
+            resources:
+              requests:
+                storage: 5Gi
+          ---
+          apiVersion: v1
+          kind: Service
+          metadata:
+            name: gdprdsar-tool
+            namespace: ${NAMESPACE}
+          spec:
+            selector:
+              app: gdprdsar-tool
+            ports:
+            - port: 80
+              targetPort: 8080
+              protocol: TCP
+              name: http
+          ---
+          apiVersion: networking.k8s.io/v1
+          kind: Ingress
+          metadata:
+            name: gdprdsar-tool-ingress
+            namespace: ${NAMESPACE}
+            annotations:
+              cert-manager.io/cluster-issuer: "letsencrypt-prod"
+              nginx.ingress.kubernetes.io/ssl-redirect: "true"
+              nginx.ingress.kubernetes.io/proxy-body-size: "10m"
+          spec:
+            ingressClassName: nginx
+            tls:
+            - hosts:
+              - gdprdsar.cyberdynamics.cz
+              secretName: gdprdsar-tool-tls
+            rules:
+            - host: gdprdsar.cyberdynamics.cz
+              http:
+                paths:
+                - path: /
+                  pathType: Prefix
+                  backend:
+                    service:
+                      name: gdprdsar-tool
+                      port:
+                        number: 80
+          EOF
+
+      - name: Wait for deployment
+        run: |
+          export KUBECONFIG=/etc/rancher/k3s/k3s.yaml
+          kubectl rollout status deployment/gdprdsar-tool -n ${NAMESPACE} --timeout=300s
+
+      - name: Verify deployment
+        run: |
+          export KUBECONFIG=/etc/rancher/k3s/k3s.yaml
+          echo "=== Pods ==="
+          kubectl get pods -n ${NAMESPACE} -l app=gdprdsar-tool
+          
+          echo ""
+          echo "=== Service ==="
+          kubectl get svc -n ${NAMESPACE} gdprdsar-tool
+          
+          echo ""
+          echo "=== Ingress ==="
+          kubectl get ingress -n ${NAMESPACE} gdprdsar-tool-ingress
+          
+          echo ""
+          echo "=== Certificate ==="
+          kubectl get certificate -n ${NAMESPACE} gdprdsar-tool-tls
