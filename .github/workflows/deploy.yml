@@ -37,6 +37,12 @@ jobs:
           # Create namespace if not exists
           kubectl create namespace ${NAMESPACE} --dry-run=client -o yaml | kubectl apply -f -
           
+          # Create or update secret from GitHub Secret
+          kubectl create secret generic gdprdsar-secrets \
+            --from-literal=connection-string="${{ secrets.GDPRDSAR_CONNECTION_STRING }}" \
+            -n ${NAMESPACE} \
+            --dry-run=client -o yaml | kubectl apply -f -
+          
           # Deploy application
           cat <<EOF | kubectl apply -f -
           apiVersion: apps/v1
