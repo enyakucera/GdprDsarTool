@@ -33,7 +33,7 @@ jobs:
       - name: Deploy to Kubernetes
         run: |
           export KUBECONFIG=/etc/rancher/k3s/k3s.yaml
-          kubectl apply --server-side --force-conflicts -f k8s/
+          kubectl apply --server-side --force-conflicts -f k8s
 
       - name: Restart deployment
         run: |
