@@ -19,7 +19,7 @@ jobs:
 
       - name: Build Docker image
         run: |
-          docker build --network host -t ${IMAGE_NAME}:${IMAGE_TAG} .
+          docker build --dns 8.8.8.8 --dns 1.1.1.1 -t ${IMAGE_NAME}:${IMAGE_TAG} .
 
       - name: Create namespace and secret
         run: |
