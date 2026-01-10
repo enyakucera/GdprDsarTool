@@ -24,38 +24,38 @@ jobs:
       - name: Create secret
         run: |
           export KUBECONFIG=/etc/rancher/k3s/k3s.yaml
-          sudo kubectl create namespace production --dry-run=client -o yaml | sudo kubectl apply -f -
-          sudo kubectl create secret generic gdprdsar-secrets \
+          kubectl create namespace production --dry-run=client -o yaml |  kbectl apply -f -
+          kubectl create secret generic gdprdsar-secrets \
             --from-literal=connection-string="${{ secrets.GDPRDSAR_CONNECTION_STRING }}" \
             -n production \
-            --dry-run=client -o yaml | sudo kubectl apply -f -
+            --dry-run=client -o yaml | kubectl apply -f -
 
       - name: Deploy to Kubernetes
         run: |
           export KUBECONFIG=/etc/rancher/k3s/k3s.yaml
-          sudo kubectl apply --server-side --force-conflicts -f k8s/
+          kubectl apply --server-side --force-conflicts -f k8s/
 
       - name: Restart deployment
         run: |
           export KUBECONFIG=/etc/rancher/k3s/k3s.yaml
-          sudo kubectl rollout restart deployment/gdprdsar-tool -n production
+          kubectl rollout restart deployment/gdprdsar-tool -n production
 
       - name: Wait for deployment
         run: |
           export KUBECONFIG=/etc/rancher/k3s/k3s.yaml
-          sudo kubectl rollout status deployment/gdprdsar-tool -n production --timeout=300s
+          kubectl rollout status deployment/gdprdsar-tool -n production --timeout=300s
 
       - name: Verify deployment
         run: |
           export KUBECONFIG=/etc/rancher/k3s/k3s.yaml
           echo "=== Pods ==="
-          sudo kubectl get pods -n production -l app=gdprdsar-tool
+          kubectl get pods -n production -l app=gdprdsar-tool
           echo ""
           echo "=== Service ==="
-          sudo kubectl get svc -n production gdprdsar-tool
+          kubectl get svc -n production gdprdsar-tool
           echo ""
           echo "=== Ingress ==="
-          sudo kubectl get ingress -n production gdprdsar-tool-ingress
+          kubectl get ingress -n production gdprdsar-tool-ingress
           echo ""
           echo "=== Certificate ==="
-          sudo kubectl get certificate -n production gdprdsar-tool-tls
+          kubectl get certificate -n production gdprdsar-tool-tls
