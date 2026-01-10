@@ -11,16 +11,16 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "workflows", "workflows", "{
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "k8s", "k8s", "{32EF01C5-67A9-445E-AC5A-DADB74BCCE8E}"
 	ProjectSection(SolutionItems) = preProject
-		deployment.yaml = deployment.yaml
-		ingress.yaml = ingress.yaml
-		pvc.yaml = pvc.yaml
-		service.yaml = service.yaml
+		k8s\deployment.yaml = k8s\deployment.yaml
+		k8s\ingress.yaml = k8s\ingress.yaml
+		k8s\pvc.yaml = k8s\pvc.yaml
+		k8s\service.yaml = k8s\service.yaml
 	EndProjectSection
 EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{NĚJAKÉ-GUID}"
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{EFCE2FE1-5785-4918-ABD0-279375B3EAB5}"
 	ProjectSection(SolutionItems) = preProject
-		Dockerfile = Dockerfile
 		.gitignore = .gitignore
+		Dockerfile = Dockerfile
 		README.md = README.md
 	EndProjectSection
 EndProject
