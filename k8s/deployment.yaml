@@ -13,6 +13,8 @@ spec:
       labels:
         app: gdprdsar-tool
     spec:
+      nodeSelector:
+        kubernetes.io/hostname: srv-vps-lnx-01
       containers:
       - name: web
         image: gdprdsar-tool:latest
