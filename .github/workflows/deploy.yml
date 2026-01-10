@@ -6,12 +6,11 @@ on:
   workflow_dispatch:
 
 env:
-  NAMESPACE: production
   IMAGE_NAME: gdprdsar-tool
   IMAGE_TAG: latest
 
 jobs:
-  build:
+  build-and-deploy:
     runs-on: self-hosted
     
     steps:
@@ -20,163 +19,43 @@ jobs:
 
       - name: Build Docker image
         run: |
-          sudo docker build --no-cache -t ${IMAGE_NAME}:${IMAGE_TAG} .
-          sudo docker images | grep ${IMAGE_NAME}
+          docker build -t ${IMAGE_NAME}:${IMAGE_TAG} .
 
-      - name: Import image to containerd
+      - name: Create namespace and secret
         run: |
-          sudo docker save ${IMAGE_NAME}:${IMAGE_TAG} -o /tmp/${IMAGE_NAME}.tar
-          sudo k3s ctr images import /tmp/${IMAGE_NAME}.tar
-          sudo k3s crictl images | grep ${IMAGE_NAME}
-          sudo rm -f /tmp/${IMAGE_NAME}.tar
+          export KUBECONFIG=/etc/rancher/k3s/k3s.yaml
+          kubectl create namespace production --dry-run=client -o yaml | kubectl apply -f -
+          kubectl create secret generic gdprdsar-secrets \
+            --from-literal=connection-string="${{ secrets.GDPRDSAR_CONNECTION_STRING }}" \
+            -n production \
+            --dry-run=client -o yaml | kubectl apply -f -
 
       - name: Deploy to Kubernetes
         run: |
           export KUBECONFIG=/etc/rancher/k3s/k3s.yaml
-          
-          # Create namespace if not exists
-          kubectl create namespace ${NAMESPACE} --dry-run=client -o yaml | kubectl apply -f -
-          
-          # Create or update secret from GitHub Secret
-          kubectl create secret generic gdprdsar-secrets \
-            --from-literal=connection-string="${{ secrets.GDPRDSAR_CONNECTION_STRING }}" \
-            -n ${NAMESPACE} \
-            --dry-run=client -o yaml | kubectl apply -f -
-          
-          # Deploy application
-          cat <<EOF | kubectl apply -f -
-          apiVersion: apps/v1
-          kind: Deployment
-          metadata:
-            name: gdprdsar-tool
-            namespace: ${NAMESPACE}
-          spec:
-            replicas: 2
-            selector:
-              matchLabels:
-                app: gdprdsar-tool
-            template:
-              metadata:
-                labels:
-                  app: gdprdsar-tool
-              spec:
-                containers:
-                - name: web
-                  image: ${IMAGE_NAME}:${IMAGE_TAG}
-                  imagePullPolicy: Never
-                  ports:
-                  - containerPort: 8080
-                    name: http
-                  env:
-                  - name: ASPNETCORE_ENVIRONMENT
-                    value: "Production"
-                  - name: ASPNETCORE_URLS
-                    value: "http://+:8080"
-                  - name: ConnectionStrings__DefaultConnection
-                    valueFrom:
-                      secretKeyRef:
-                        name: gdprdsar-secrets
-                        key: connection-string
-                  resources:
-                    requests:
-                      memory: "512Mi"
-                      cpu: "500m"
-                    limits:
-                      memory: "1Gi"
-                      cpu: "2000m"
-                  volumeMounts:
-                  - name: pdfs
-                    mountPath: /app/wwwroot/pdfs
-                  livenessProbe:
-                    httpGet:
-                      path: /
-                      port: 8080
-                    initialDelaySeconds: 30
-                    periodSeconds: 20
-                  readinessProbe:
-                    httpGet:
-                      path: /
-                      port: 8080
-                    initialDelaySeconds: 10
-                    periodSeconds: 10
-                volumes:
-                - name: pdfs
-                  persistentVolumeClaim:
-                    claimName: gdprdsar-pdfs-pvc
-          ---
-          apiVersion: v1
-          kind: PersistentVolumeClaim
-          metadata:
-            name: gdprdsar-pdfs-pvc
-            namespace: ${NAMESPACE}
-          spec:
-            accessModes:
-            - ReadWriteOnce
-            resources:
-              requests:
-                storage: 5Gi
-          ---
-          apiVersion: v1
-          kind: Service
-          metadata:
-            name: gdprdsar-tool
-            namespace: ${NAMESPACE}
-          spec:
-            selector:
-              app: gdprdsar-tool
-            ports:
-            - port: 80
-              targetPort: 8080
-              protocol: TCP
-              name: http
-          ---
-          apiVersion: networking.k8s.io/v1
-          kind: Ingress
-          metadata:
-            name: gdprdsar-tool-ingress
-            namespace: ${NAMESPACE}
-            annotations:
-              cert-manager.io/cluster-issuer: "letsencrypt-prod"
-              nginx.ingress.kubernetes.io/ssl-redirect: "true"
-              nginx.ingress.kubernetes.io/proxy-body-size: "10m"
-          spec:
-            ingressClassName: nginx
-            tls:
-            - hosts:
-              - gdprdsar.cyberdynamics.cz
-              secretName: gdprdsar-tool-tls
-            rules:
-            - host: gdprdsar.cyberdynamics.cz
-              http:
-                paths:
-                - path: /
-                  pathType: Prefix
-                  backend:
-                    service:
-                      name: gdprdsar-tool
-                      port:
-                        number: 80
-          EOF
+          kubectl apply --server-side --force-conflicts -f k8s/
+
+      - name: Restart deployment
+        run: |
+          export KUBECONFIG=/etc/rancher/k3s/k3s.yaml
+          kubectl rollout restart deployment/gdprdsar-tool -n production
 
       - name: Wait for deployment
         run: |
           export KUBECONFIG=/etc/rancher/k3s/k3s.yaml
-          kubectl rollout status deployment/gdprdsar-tool -n ${NAMESPACE} --timeout=300s
+          kubectl rollout status deployment/gdprdsar-tool -n production --timeout=300s
 
       - name: Verify deployment
         run: |
           export KUBECONFIG=/etc/rancher/k3s/k3s.yaml
           echo "=== Pods ==="
-          kubectl get pods -n ${NAMESPACE} -l app=gdprdsar-tool
-          
+          kubectl get pods -n production -l app=gdprdsar-tool
           echo ""
           echo "=== Service ==="
-          kubectl get svc -n ${NAMESPACE} gdprdsar-tool
-          
+          kubectl get svc -n production gdprdsar-tool
           echo ""
           echo "=== Ingress ==="
-          kubectl get ingress -n ${NAMESPACE} gdprdsar-tool-ingress
-          
+          kubectl get ingress -n production gdprdsar-tool-ingress
           echo ""
           echo "=== Certificate ==="
-          kubectl get certificate -n ${NAMESPACE} gdprdsar-tool-tls
+          kubectl get certificate -n production gdprdsar-tool-tls
