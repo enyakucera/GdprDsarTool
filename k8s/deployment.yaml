@@ -4,7 +4,7 @@ metadata:
   name: gdprdsar-tool
   namespace: production
 spec:
-  replicas: 2
+  replicas: 1
   selector:
     matchLabels:
       app: gdprdsar-tool
@@ -13,8 +13,6 @@ spec:
       labels:
         app: gdprdsar-tool
     spec:
-      nodeSelector:
-        kubernetes.io/hostname: srv-vps-lnx-01
       containers:
       - name: web
         image: gdprdsar-tool:latest
@@ -34,11 +32,11 @@ spec:
               key: connection-string
         resources:
           requests:
-            memory: "512Mi"
-            cpu: "500m"
+            memory: "256Mi"
+            cpu: "100m"
           limits:
-            memory: "1Gi"
-            cpu: "2000m"
+            memory: "512Mi"
+            cpu: "1000m"
         volumeMounts:
         - name: pdfs
           mountPath: /app/wwwroot/pdfs
