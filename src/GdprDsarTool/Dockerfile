@@ -4,11 +4,6 @@
 
 # Stage 1: Build
 FROM mcr.microsoft.com/dotnet/sdk:10.0 AS build
-
-# Configure DNS
-RUN echo "nameserver 8.8.8.8" > /etc/resolv.conf && \
-    echo "nameserver 1.1.1.1" >> /etc/resolv.conf
-
 WORKDIR /src
 
 # Copy solution and project files
@@ -23,7 +18,7 @@ RUN for i in 1 2 3 4 5; do \
 # Copy everything else and build
 COPY . .
 WORKDIR /src/src/GdprDsarTool
-RUN dotnet publish -c Release -o /app/publish
+RUN dotnet publish -c Release -o /app/publish --no-restore
 
 # Stage 2: Runtime
 FROM mcr.microsoft.com/dotnet/aspnet:10.0 AS runtime
