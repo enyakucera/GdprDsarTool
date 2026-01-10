@@ -2,7 +2,7 @@ name: Deploy GdprDsarTool to Kubernetes
 
 on:
   push:
-    branches: [ master ]
+    branches: [ main ]
   workflow_dispatch:
 
 env:
