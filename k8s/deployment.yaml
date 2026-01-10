@@ -39,9 +39,6 @@ spec:
           limits:
             memory: "512Mi"
             cpu: "1000m"
-        volumeMounts:
-        - name: pdfs
-          mountPath: /app/wwwroot/pdfs
         livenessProbe:
           httpGet:
             path: /
@@ -54,7 +51,3 @@ spec:
             port: 8080
           initialDelaySeconds: 10
           periodSeconds: 10
-      volumes:
-      - name: pdfs
-        persistentVolumeClaim:
-          claimName: gdprdsar-pdfs-pvc
