@@ -18,7 +18,12 @@ RUN for i in 1 2 3 4 5; do \
 # Copy everything else and build
 COPY . .
 WORKDIR /src/src/GdprDsarTool
+
+# Publish application
 RUN dotnet publish -c Release -o /app/publish --no-restore
+
+# Explicitly copy Migrations to publish folder (in case .csproj directive doesn't work)
+RUN if [ -d "Migrations" ]; then cp -r Migrations /app/publish/Migrations; fi
 
 # Stage 2: Runtime
 FROM mcr.microsoft.com/dotnet/aspnet:10.0 AS runtime
@@ -26,9 +31,6 @@ WORKDIR /app
 
 # Copy published application
 COPY --from=build /app/publish .
-
-# Copy migration files explicitly (they're not included in publish by default)
-COPY --from=build /src/src/GdprDsarTool/Migrations ./Migrations
 
 # Create pdfs directory
 RUN mkdir -p wwwroot/pdfs && chmod 777 wwwroot/pdfs
