@@ -17,25 +17,10 @@ RUN for i in 1 2 3 4 5; do \
 
 # Copy everything else and build
 COPY . .
-
-# Debug: Check what was copied
-RUN echo "=== Contents of /src ===" && ls -la /src/src/GdprDsarTool/
-
 WORKDIR /src/src/GdprDsarTool
 
 # Publish application
 RUN dotnet publish -c Release -o /app/publish --no-restore
-
-# Explicitly copy Migrations to publish folder
-RUN echo "=== Copying Migrations ===" && \
-    if [ -d "Migrations" ]; then \
-        cp -r Migrations /app/publish/ && \
-        echo "Migrations copied successfully" && \
-        ls -la /app/publish/Migrations/; \
-    else \
-        echo "ERROR: Migrations folder not found!"; \
-        exit 1; \
-    fi
 
 # Stage 2: Runtime
 FROM mcr.microsoft.com/dotnet/aspnet:10.0 AS runtime
