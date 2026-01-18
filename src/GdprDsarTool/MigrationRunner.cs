@@ -86,6 +86,12 @@ public static class MigrationRunner
 
                 try
                 {
+                    // EnsureCreated only works if DB doesn't exist at all
+                    // If DB exists but is empty, we need to drop it first
+                    Console.WriteLine("Dropping existing database...");
+                    await context.Database.EnsureDeletedAsync();
+
+                    Console.WriteLine("Creating database and schema...");
                     await context.Database.EnsureCreatedAsync();
                     Console.WriteLine("✓ Database schema created via EnsureCreated()");
 
@@ -103,6 +109,7 @@ public static class MigrationRunner
                 catch (Exception ex)
                 {
                     Console.Error.WriteLine($"ERROR: EnsureCreated failed: {ex.Message}");
+                    Console.Error.WriteLine($"Stack trace: {ex.StackTrace}");
                     return 1;
                 }
             }
