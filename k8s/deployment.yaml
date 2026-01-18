@@ -15,6 +15,26 @@ spec:
     spec:
       nodeSelector:
         kubernetes.io/hostname: srv-vps-lnx-01
+      initContainers:
+      - name: migration
+        image: gdprdsar-tool:latest
+        imagePullPolicy: Never
+        command: ["dotnet", "GdprDsarTool.dll", "--migrate"]
+        env:
+        - name: ASPNETCORE_ENVIRONMENT
+          value: "Production"
+        - name: ConnectionStrings__DefaultConnection
+          valueFrom:
+            secretKeyRef:
+              name: gdprdsar-secrets
+              key: connection-string
+        resources:
+          requests:
+            memory: "128Mi"
+            cpu: "100m"
+          limits:
+            memory: "256Mi"
+            cpu: "500m"
       containers:
       - name: web
         image: gdprdsar-tool:latest

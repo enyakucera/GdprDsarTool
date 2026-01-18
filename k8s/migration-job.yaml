@@ -1,0 +1,38 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: gdprdsar-migration
+  namespace: production
+  annotations:
+    description: "Database migration job for GdprDsarTool"
+spec:
+  ttlSecondsAfterFinished: 300  # Auto-cleanup after 5 minutes
+  backoffLimit: 3
+  template:
+    metadata:
+      labels:
+        app: gdprdsar-migration
+    spec:
+      restartPolicy: Never
+      nodeSelector:
+        kubernetes.io/hostname: srv-vps-lnx-01
+      containers:
+      - name: migration
+        image: gdprdsar-tool:latest
+        imagePullPolicy: Never
+        command: ["dotnet", "GdprDsarTool.dll", "--migrate"]
+        env:
+        - name: ASPNETCORE_ENVIRONMENT
+          value: "Production"
+        - name: ConnectionStrings__DefaultConnection
+          valueFrom:
+            secretKeyRef:
+              name: gdprdsar-secrets
+              key: connection-string
+        resources:
+          requests:
+            memory: "128Mi"
+            cpu: "100m"
+          limits:
+            memory: "256Mi"
+            cpu: "500m"

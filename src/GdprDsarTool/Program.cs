@@ -2,6 +2,12 @@ using Microsoft.EntityFrameworkCore;
 using GdprDsarTool.Data;
 using GdprDsarTool.Services;
 
+// Check if running in migration mode
+if (args.Length > 0 && args[0] == "--migrate")
+{
+    return await GdprDsarTool.MigrationRunner.RunMigrationsAsync(args);
+}
+
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container
@@ -36,28 +42,6 @@ builder.Services.AddMemoryCache();
 
 var app = builder.Build();
 
-// Ensure database is created and seeded
-using (var scope = app.Services.CreateScope())
-{
-    var services = scope.ServiceProvider;
-    try
-    {
-        var context = services.GetRequiredService<AppDbContext>();
-        context.Database.Migrate();
-        
-        // Seed data if empty
-        if (!context.Companies.Any())
-        {
-            await DbInitializer.SeedAsync(context, builder.Configuration);
-        }
-    }
-    catch (Exception ex)
-    {
-        var logger = services.GetRequiredService<ILogger<Program>>();
-        logger.LogError(ex, "Database migration failed - continuing without DB");
-    }
-}
-
 // Configure the HTTP request pipeline
 if (!app.Environment.IsDevelopment())
 {
@@ -76,3 +60,5 @@ app.MapControllerRoute(
     pattern: "{controller=Home}/{action=Index}/{id?}");
 
 app.Run();
+
+return 0;
