@@ -27,6 +27,9 @@ WORKDIR /app
 # Copy published application
 COPY --from=build /app/publish .
 
+# Copy migration files explicitly (they're not included in publish by default)
+COPY --from=build /src/src/GdprDsarTool/Migrations ./Migrations
+
 # Create pdfs directory
 RUN mkdir -p wwwroot/pdfs && chmod 777 wwwroot/pdfs
 

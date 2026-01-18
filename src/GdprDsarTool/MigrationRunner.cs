@@ -65,6 +65,27 @@ public static class MigrationRunner
             var appliedList = appliedMigrations.ToList();
             Console.WriteLine($"Currently applied migrations: {appliedList.Count}");
 
+            // List all available migrations in the assembly
+            Console.WriteLine("Checking available migrations in assembly...");
+            var allMigrations = context.Database.GetMigrations();
+            var allMigrationsList = allMigrations.ToList();
+            Console.WriteLine($"Total migrations found in assembly: {allMigrationsList.Count}");
+            if (allMigrationsList.Count > 0)
+            {
+                Console.WriteLine("Available migrations:");
+                foreach (var migration in allMigrationsList)
+                {
+                    Console.WriteLine($"  - {migration}");
+                }
+            }
+            else
+            {
+                Console.Error.WriteLine("ERROR: No migrations found in assembly!");
+                Console.Error.WriteLine("This means migration files are not included in the published output.");
+                Console.Error.WriteLine("Check Dockerfile and ensure Migrations folder is copied.");
+                return 1;
+            }
+
             Console.WriteLine("Checking for pending migrations...");
             var pendingMigrations = await context.Database.GetPendingMigrationsAsync();
             var pendingList = pendingMigrations.ToList();
@@ -99,13 +120,39 @@ public static class MigrationRunner
                     Console.WriteLine($"  - {migration}");
                 }
 
-                Console.WriteLine("Applying migrations...");
-                await context.Database.MigrateAsync();
-                Console.WriteLine("Migrations applied successfully!");
-            }
+                    Console.WriteLine("Applying migrations...");
+                    await context.Database.MigrateAsync();
+                    Console.WriteLine("Migrations applied successfully!");
+                }
 
-            // Check if seeding is needed - use safe check
-            Console.WriteLine("Checking if seeding is needed...");
+                // Verify tables exist after migration
+                Console.WriteLine("Verifying database schema...");
+                try
+                {
+                    // Try to query Companies table to verify it exists
+                    var companiesExist = await context.Companies.AnyAsync();
+                    Console.WriteLine("✓ Companies table exists and is queryable");
+                }
+                catch (Exception ex)
+                {
+                    Console.Error.WriteLine($"ERROR: Database schema verification failed!");
+                    Console.Error.WriteLine($"Tables do not exist after migration: {ex.Message}");
+                    Console.Error.WriteLine("Attempting fallback: EnsureCreated...");
+
+                    try
+                    {
+                        await context.Database.EnsureCreatedAsync();
+                        Console.WriteLine("EnsureCreated completed successfully!");
+                    }
+                    catch (Exception ensureEx)
+                    {
+                        Console.Error.WriteLine($"EnsureCreated also failed: {ensureEx.Message}");
+                        return 1;
+                    }
+                }
+
+                // Check if seeding is needed - use safe check
+                Console.WriteLine("Checking if seeding is needed...");
             bool needsSeed = false;
             try
             {

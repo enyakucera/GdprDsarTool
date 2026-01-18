@@ -147,6 +147,46 @@ kubectl run migration-fix --rm -it \
 **Preventivní fix (už implementováno):**
 MigrationRunner nyní automaticky detekuje tento stav a spustí migrace, i když nejsou "pending".
 
+#### F) Migration files chybí v Docker image (KRITICKÉ!)
+
+**Příznaky:**
+```
+Total migrations found in assembly: 0
+Migration completed!
+Invalid object name 'Companies'.
+```
+
+**Příčina:**
+Migration files (.cs) se nekopírují do Docker image při `dotnet publish`.
+
+**Ověření:**
+```bash
+# Zkontrolujte, zda migrace jsou v image
+docker run --rm gdprdsar-tool:latest ls -la Migrations/
+# Nebo použijte script:
+./verify-migrations-in-image.sh
+```
+
+**Řešení:**
+Už je opraveno v:
+- `src/GdprDsarTool/GdprDsarTool.csproj` - Include Migrations
+- `Dockerfile` - Explicitní COPY Migrations/
+
+**Akce:**
+```bash
+# Rebuild image s opraveným Dockerfile
+git pull  # Pokud už je fix v main
+docker build -t gdprdsar-tool:latest .
+
+# Verify fix
+./verify-migrations-in-image.sh
+
+# Redeploy
+./quick-redeploy.sh
+```
+
+Více info: [FIX_MIGRATION_FILES.md](FIX_MIGRATION_FILES.md)
+
 ### 4. Úplný debug script
 
 ```bash
