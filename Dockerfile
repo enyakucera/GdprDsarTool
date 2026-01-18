@@ -19,11 +19,17 @@ RUN for i in 1 2 3 4 5; do \
 COPY . .
 WORKDIR /src/src/GdprDsarTool
 
+# Debug: Check if Migrations exist
+RUN ls -la && echo "=== Checking for Migrations folder ===" && ls -la Migrations/ || echo "Migrations folder NOT FOUND"
+
 # Publish application
 RUN dotnet publish -c Release -o /app/publish --no-restore
 
-# Explicitly copy Migrations to publish folder (in case .csproj directive doesn't work)
-RUN if [ -d "Migrations" ]; then cp -r Migrations /app/publish/Migrations; fi
+# Debug: Check publish output
+RUN echo "=== Checking /app/publish contents ===" && ls -la /app/publish/
+
+# Explicitly copy Migrations to publish folder
+RUN echo "=== Copying Migrations ===" && cp -r Migrations /app/publish/ && ls -la /app/publish/Migrations/
 
 # Stage 2: Runtime
 FROM mcr.microsoft.com/dotnet/aspnet:10.0 AS runtime
