@@ -109,6 +109,44 @@ resources:
     cpu: "50m"       # Původně 100m
 ```
 
+#### E) Invalid object name 'Companies' - Migrace neproběhly
+
+**Příznaky:**
+```
+No pending migrations found. Database is up to date.
+=== Migration Failed ===
+Error: Invalid object name 'Companies'.
+```
+
+**Příčina:**
+- Databáze existuje, ale tabulky nebyly vytvořeny
+- Migration history tabulka (`__EFMigrationsHistory`) je prázdná nebo neexistuje
+
+**Řešení:**
+```bash
+# 1. Zkontrolujte migration history v databázi
+sqlcmd -S localhost -U sa -P 'your-password' -d GdprDsarTool -Q "SELECT * FROM __EFMigrationsHistory"
+
+# 2. Pokud je prázdná nebo neexistuje, smaž a znovu vytvoř databázi
+sqlcmd -S localhost -U sa -P 'your-password' -Q "DROP DATABASE IF EXISTS GdprDsarTool"
+
+# 3. Pak znovu spusť deployment - migrace vytvoří vše znovu
+kubectl rollout restart deployment/gdprdsar-tool -n production
+```
+
+**Nebo force re-migration:**
+```bash
+# Smaž migration history a nech migrace proběhnout znovu
+kubectl run migration-fix --rm -it \
+  --image=gdprdsar-tool:latest \
+  --env="ConnectionStrings__DefaultConnection=$CONN_STRING" \
+  --restart=Never \
+  -- dotnet GdprDsarTool.dll --migrate
+```
+
+**Preventivní fix (už implementováno):**
+MigrationRunner nyní automaticky detekuje tento stav a spustí migrace, i když nejsou "pending".
+
 ### 4. Úplný debug script
 
 ```bash

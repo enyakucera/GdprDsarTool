@@ -58,14 +58,38 @@ public static class MigrationRunner
             {
                 Console.WriteLine("Database connection successful!");
             }
-            
+
+            // Check applied migrations first
+            Console.WriteLine("Checking migration history...");
+            var appliedMigrations = await context.Database.GetAppliedMigrationsAsync();
+            var appliedList = appliedMigrations.ToList();
+            Console.WriteLine($"Currently applied migrations: {appliedList.Count}");
+
             Console.WriteLine("Checking for pending migrations...");
             var pendingMigrations = await context.Database.GetPendingMigrationsAsync();
             var pendingList = pendingMigrations.ToList();
 
+            if (appliedList.Count == 0 && pendingList.Count == 0)
+            {
+                Console.WriteLine("WARNING: No migrations found in history and no pending migrations!");
+                Console.WriteLine("This might indicate a fresh database. Running EnsureCreated or Migrate...");
+            }
+
             if (pendingList.Count == 0)
             {
-                Console.WriteLine("No pending migrations found. Database is up to date.");
+                Console.WriteLine("No pending migrations found.");
+
+                // Double-check: If no applied migrations exist, force migrate
+                if (appliedList.Count == 0)
+                {
+                    Console.WriteLine("No applied migrations in history. Forcing migration to ensure schema...");
+                    await context.Database.MigrateAsync();
+                    Console.WriteLine("Migration completed!");
+                }
+                else
+                {
+                    Console.WriteLine("Database is up to date.");
+                }
             }
             else
             {
@@ -80,8 +104,21 @@ public static class MigrationRunner
                 Console.WriteLine("Migrations applied successfully!");
             }
 
-            // Check if seeding is needed
-            if (!await context.Companies.AnyAsync())
+            // Check if seeding is needed - use safe check
+            Console.WriteLine("Checking if seeding is needed...");
+            bool needsSeed = false;
+            try
+            {
+                needsSeed = !await context.Companies.AnyAsync();
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"WARNING: Could not check Companies table: {ex.Message}");
+                Console.WriteLine("Assuming seed is needed...");
+                needsSeed = true;
+            }
+
+            if (needsSeed)
             {
                 Console.WriteLine("Database is empty. Running seed...");
                 await DbInitializer.SeedAsync(context, configuration);
@@ -92,8 +129,18 @@ public static class MigrationRunner
                 Console.WriteLine("Database already contains data. Skipping seed.");
             }
 
-            var appliedMigrations = await context.Database.GetAppliedMigrationsAsync();
-            Console.WriteLine($"\nTotal applied migrations: {appliedMigrations.Count()}");
+            var finalAppliedMigrations = await context.Database.GetAppliedMigrationsAsync();
+            var finalAppliedList = finalAppliedMigrations.ToList();
+            Console.WriteLine($"\nFinal migration status:");
+            Console.WriteLine($"Total applied migrations: {finalAppliedList.Count}");
+            if (finalAppliedList.Count > 0)
+            {
+                Console.WriteLine("Applied migrations:");
+                foreach (var migration in finalAppliedList)
+                {
+                    Console.WriteLine($"  ✓ {migration}");
+                }
+            }
             Console.WriteLine($"Completed at: {DateTime.UtcNow:yyyy-MM-dd HH:mm:ss} UTC");
             Console.WriteLine("=== Migration Successful ===");
 
