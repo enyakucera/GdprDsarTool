@@ -1,5 +1,7 @@
 # GdprDsarTool - Quick Reference
 
+> **⚠️ Deployment fails?** See [DEPLOYMENT_TROUBLESHOOTING.md](DEPLOYMENT_TROUBLESHOOTING.md)
+
 ## 🚀 Common Tasks
 
 ### Database Migrations

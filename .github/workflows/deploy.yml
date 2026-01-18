@@ -41,9 +41,49 @@ jobs:
           kubectl rollout restart deployment/gdprdsar-tool -n production
 
       - name: Wait for deployment
+        id: wait_deployment
+        continue-on-error: true
         run: |
           export KUBECONFIG=/etc/rancher/k3s/k3s.yaml
           kubectl rollout status deployment/gdprdsar-tool -n production --timeout=300s
+
+      - name: Debug deployment failure
+        if: steps.wait_deployment.outcome == 'failure'
+        run: |
+          export KUBECONFIG=/etc/rancher/k3s/k3s.yaml
+          echo "==================================="
+          echo "DEPLOYMENT FAILED - DEBUGGING"
+          echo "==================================="
+          echo ""
+
+          echo "=== Pod Status ==="
+          kubectl get pods -n production -l app=gdprdsar-tool -o wide
+          echo ""
+
+          echo "=== Recent Events ==="
+          kubectl get events -n production --sort-by='.lastTimestamp' | tail -30
+          echo ""
+
+          POD_NAME=$(kubectl get pods -n production -l app=gdprdsar-tool -o jsonpath='{.items[0].metadata.name}' 2>/dev/null || echo "")
+
+          if [ -n "$POD_NAME" ]; then
+            echo "=== Pod Details: $POD_NAME ==="
+            kubectl describe pod "$POD_NAME" -n production
+            echo ""
+
+            echo "=== Init Container (Migration) Logs ==="
+            kubectl logs "$POD_NAME" -c migration -n production --tail=100 || echo "No migration logs"
+            echo ""
+
+            echo "=== Application Logs ==="
+            kubectl logs "$POD_NAME" -c web -n production --tail=100 || echo "No app logs"
+            echo ""
+          fi
+
+          echo "=== Deployment Description ==="
+          kubectl describe deployment/gdprdsar-tool -n production
+
+          exit 1
 
       - name: Verify deployment
         run: |

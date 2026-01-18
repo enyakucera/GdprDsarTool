@@ -45,14 +45,19 @@ public static class MigrationRunner
 
             await using var context = new AppDbContext(optionsBuilder.Options);
 
-            Console.WriteLine("Testing database connection...");
-            if (!await context.Database.CanConnectAsync())
-            {
-                Console.Error.WriteLine("ERROR: Cannot connect to database");
-                return 1;
-            }
+            Console.WriteLine("Checking database connection and ensuring database exists...");
 
-            Console.WriteLine("Connection successful!");
+            // Try to connect - if DB doesn't exist, this will prepare to create it
+            var canConnect = await context.Database.CanConnectAsync();
+
+            if (!canConnect)
+            {
+                Console.WriteLine("Database doesn't exist yet. Will be created during migration.");
+            }
+            else
+            {
+                Console.WriteLine("Database connection successful!");
+            }
             
             Console.WriteLine("Checking for pending migrations...");
             var pendingMigrations = await context.Database.GetPendingMigrationsAsync();

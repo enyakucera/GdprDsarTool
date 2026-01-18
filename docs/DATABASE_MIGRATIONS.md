@@ -137,6 +137,61 @@ The custom `MigrationRunner` (`src/GdprDsarTool/MigrationRunner.cs`) provides:
 
 ## Troubleshooting
 
+### Deployment Timeout (Most Common Issue)
+
+**Symptoms:** GitHub Actions shows "timed out waiting for the condition"
+
+**Solution Steps:**
+
+1. **Run debug script on server:**
+   ```bash
+   chmod +x debug-deployment.sh
+   ./debug-deployment.sh
+   ```
+
+2. **Check pod status manually:**
+   ```bash
+   export KUBECONFIG=/etc/rancher/k3s/k3s.yaml
+   kubectl get pods -n production -l app=gdprdsar-tool
+   ```
+
+3. **Check init container (migration) logs:**
+   ```bash
+   POD_NAME=$(kubectl get pods -n production -l app=gdprdsar-tool -o jsonpath='{.items[0].metadata.name}')
+   kubectl logs $POD_NAME -c migration -n production
+   ```
+
+4. **Check application logs:**
+   ```bash
+   kubectl logs $POD_NAME -c web -n production
+   ```
+
+5. **Check events:**
+   ```bash
+   kubectl get events -n production --sort-by='.lastTimestamp' | tail -20
+   ```
+
+**Common Causes:**
+- ❌ Database connection string incorrect
+- ❌ Database server not accessible from K8s
+- ❌ Migration syntax errors
+- ❌ Insufficient resources (memory/CPU)
+- ❌ Network timeout
+
+### Test Before Deploy
+
+**Always test migrations locally first:**
+
+```bash
+# Test in Docker container (simulates K8s)
+./test-migration.sh    # Linux/Mac
+test-migration.bat     # Windows
+
+# Or test directly
+cd src/GdprDsarTool
+dotnet run -- --migrate
+```
+
 ### Init container fails
 ```bash
 # Check init container logs
@@ -144,6 +199,12 @@ kubectl logs <pod-name> -c migration -n production
 
 # Describe pod for events
 kubectl describe pod <pod-name> -n production
+
+# Check if database is accessible
+kubectl run -it --rm debug \
+  --image=mcr.microsoft.com/mssql-tools \
+  --restart=Never \
+  -- /opt/mssql-tools/bin/sqlcmd -S <server> -U <user> -P <pass> -Q "SELECT 1"
 ```
 
 ### Migration job fails
@@ -164,6 +225,27 @@ cat src/GdprDsarTool/appsettings.Development.json
 cd src/GdprDsarTool
 export ASPNETCORE_ENVIRONMENT=Development
 dotnet run -- --migrate
+```
+
+### Database doesn't exist yet
+
+This is OK! The migration runner will create it:
+```
+Database doesn't exist yet. Will be created during migration.
+Checking for pending migrations...
+```
+
+### Connection timeout
+
+Increase timeout in deployment or check network:
+```yaml
+# k8s/deployment.yaml
+initContainers:
+  - name: migration
+    # Add timeout
+    env:
+    - name: CommandTimeout
+      value: "300"
 ```
 
 ## Best Practices
